@@ -1,71 +1,56 @@
-﻿using System;
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace PasswordGenerator
 {
-    internal class Program
+    public class Program
     {
-        // Example name
-        const string ExampleName = "Doe, John";
-        
         // Create objects
-        static StructuredElement buildElement;
-        static StringBuilder structure;        
-
-        static void Main(string[] args)
-        {
-            // Instantiation
-            buildElement = new StructuredElement();
-            structure = new StringBuilder();
-
-            var initials = buildElement.RegexGetGivenNameInitials(ExampleName);
-
-            if (initials != null)
-            {
-                for (int i = 0; i < 200; i++)
-                {
-                    var prefix = buildElement.AsciiRangeGen(initials);
-                    var root = buildElement.NumericRangeGen();
-                    var suffix = buildElement.SymbolPoolGenerator();
-
-                    structure.Append(prefix);
-                    structure.Append(root.ToString().Substring(0, 5));
-                    structure.Append(suffix);
-
-                    Console.WriteLine($"{i + 1:00#}. Password: {structure}");
-                    structure.Clear();
-                }
-            }
-            else
-            {
-                Console.WriteLine("nothing here or name does not exist.\n");                
-            }
-
-            Console.ReadLine();
-        }        
-    }
-
-    class StructuredElement
-    {
+        StringBuilder structure;
         Random asciiRange;
         HashSet<int> numbers;
         HashSet<char> symbols;
         Regex _initials;
 
-        public StructuredElement()
+        public string ReturnPassword(string str)
         {
-            _initials = new Regex(@"(\b[a-zA-Z])[a-zA-Z]* ?");
-            asciiRange = new Random();            
+            ElementPrep();
+
+            // Example name
+            string ExampleName = str;
+
+            // Instantiation
+            structure = new StringBuilder();
+
+            var initials = RegexGetGivenNameInitials(ExampleName);
+
+            if (initials != null)
+            {
+                var prefix = AsciiRangeGen(initials);
+                var root = NumericRangeGen();
+                var suffix = SymbolPoolGenerator();
+
+                structure.Append(prefix);
+                structure.Append(root.ToString().Substring(0, 5));
+                structure.Append(suffix);
+            }
+            return structure.ToString();
+        }
+
+        public void ElementPrep()
+        {
+            _initials = new Regex(@"(\b[a - zA - Z])[a - zA - Z] * ? ");
+            asciiRange = new Random();
             numbers = new HashSet<int>();
             symbols = new HashSet<char>();
         }
 
         public string AsciiRangeGen(string initials) // Recursion, prefix must not be same as Given Name Initials
         {
-            string trivial = $"{(char)asciiRange.Next(65, 90)}" +
-                $"{(char)asciiRange.Next(97, 122)}";
+            string trivial = ((char)asciiRange.Next(65, 90)).ToString() + ((char)asciiRange.Next(97, 122)).ToString();
 
             return initials != trivial ?
                 trivial : AsciiRangeGen(initials);
@@ -83,10 +68,9 @@ namespace PasswordGenerator
 
                 } while (symbols.Count > 0 && symbols.Count < 2);
             }
-            catch { Exception e = null; }
+            catch { }
             string suffix = String.Join("", symbols);
             symbols.Clear();
-
             return suffix;
         }
 
@@ -101,8 +85,8 @@ namespace PasswordGenerator
                     numbers.Add(tmp);
 
                 } while (numbers.Count > 0 && numbers.Count < 6);
-               
-            } catch { Exception e = null; }
+            }
+            catch { }
             int root = Int32.Parse(String.Join("", numbers));
             numbers.Clear();
 
@@ -114,11 +98,9 @@ namespace PasswordGenerator
             try
             {
                 if (givenName != null)
-                    givenName = $"{givenName.Split(',')[1].Trim()}" +
-                        $"{givenName.Split(',')[0].Trim()}";
+                    givenName = givenName.Split(',')[1].Trim() + givenName.Split(',')[0].Trim();
             }
-            catch { Exception e = null; }
-
+            catch { }
             return _initials.Replace(givenName, "$1");
         }
     }
